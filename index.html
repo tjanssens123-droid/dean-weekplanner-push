@@ -8,52 +8,36 @@
   <title>Dean Weekplanner Push</title>
   <style>
     body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:0;background:#f5f7fb;color:#101828}
-    .wrap{max-width:680px;margin:auto;padding:20px}.card{background:#fff;border-radius:18px;padding:18px;margin:14px 0;box-shadow:0 6px 24px #10182812}
-    button,select,textarea{font:inherit;border-radius:12px;padding:12px}button{background:#111827;color:#fff;border:0;font-weight:650;cursor:pointer}
-    select,textarea{border:1px solid #d0d5dd;width:100%;box-sizing:border-box}.muted{color:#667085}.ok{color:#067647}.warn{color:#b54708}.small{font-size:13px}
-    .code{word-break:break-all;background:#f2f4f7;padding:10px;border-radius:10px}
+    .wrap{max-width:680px;margin:auto;padding:20px}
+    .card{background:#fff;border-radius:18px;padding:18px;margin:14px 0;box-shadow:0 6px 24px #10182812}
+    button{font:inherit;border-radius:12px;padding:12px;background:#111827;color:#fff;border:0;font-weight:650;cursor:pointer;margin:4px 4px 4px 0}
+    .muted{color:#667085}.ok{color:#067647}.warn{color:#b54708}.small{font-size:13px}
   </style>
 </head>
 <body>
 <div class="wrap">
   <h1>Dean Weekplanner</h1>
-  <p class="muted">Pushmeldingen voor Dean en Stefan</p>
-
-  <div class="card">
-    <h2>wie ben jij</h2>
-    <select id="role">
-      <option value="">kies gebruiker</option>
-      <option value="Dean">Dean</option>
-      <option value="Stefan">Stefan</option>
-    </select>
-  </div>
+  <p class="muted">Pushmeldingen</p>
 
   <div class="card">
     <h2>meldingen aanzetten</h2>
-    <p class="muted">zet deze site op je beginscherm en tik daarna op meldingen aanzetten</p>
+    <p class="muted">iedereen die hier één keer op drukt krijgt daarna automatisch de meldingen</p>
     <button id="enable">meldingen aanzetten</button>
-    <button id="test">test op dit toestel</button>
+    <button id="selftest">test op dit toestel</button>
     <p id="status" class="small"></p>
   </div>
 
   <div class="card">
-    <h2>eenmalig koppelen</h2>
-    <p class="muted">maak je eigen koppelcode en stuur die naar de ander</p>
-    <button id="make">mijn koppelcode maken</button>
-    <div id="mine" class="code small" style="display:none"></div>
-    <p><textarea id="peer" rows="4" placeholder="plak hier de code van de ander"></textarea></p>
-    <button id="save">code opslaan</button>
-    <p id="peerStatus" class="small"></p>
-  </div>
-
-  <div class="card">
-    <h2>test naar de ander</h2>
-    <button id="send">stuur test push</button>
-    <p id="sendStatus" class="small"></p>
+    <h2>test naar iedereen</h2>
+    <p class="muted">hiermee testen we of alle aangemelde telefoons een pushmelding krijgen</p>
+    <button id="broadcast">stuur test naar iedereen</button>
+    <p id="broadcastStatus" class="small"></p>
   </div>
 
   <script>
-    const PUBLIC_KEY='BGT3el97fqi3X4j9ED_4lCoZG4zYM7znovqKecEfhoB_RMPVK0KqeBqM_Ck1_lqMwSE77N9EKBhvSE0ZghpT8CQ';
+    const PUBLIC_KEY='BBtMg90-ouJN-M5Hobgj73W8b2hZGVG4GKMd321J5hCN0AAMf1aqWPn3JZgX6zGXrjXDxGqH-T1qkoeWnBXUSOg';
+    const SUPABASE_URL='https://kfrruzezmdiaoekucmnl.supabase.co';
+    const SUPABASE_KEY='sb_publishable_4Mx8mLcyFuwbLezyqYVZLA_lO8_zsTe';
     const $=id=>document.getElementById(id);
     let reg;
 
@@ -64,14 +48,37 @@
       return Uint8Array.from([...raw].map(c=>c.charCodeAt(0)));
     }
 
-    async function init(){
-      if('serviceWorker' in navigator){
-        reg=await navigator.serviceWorker.register('/sw.js');
-        await navigator.serviceWorker.ready;
-      }
-      $('role').value=localStorage.role||'';
-      $('role').onchange=()=>localStorage.role=$('role').value;
-      updateStatus();
+    async function saveSubscription(sub){
+      const j=sub.toJSON();
+      const r=await fetch(SUPABASE_URL+'/rest/v1/push_subscriptions?on_conflict=endpoint',{
+        method:'POST',
+        headers:{
+          'apikey':SUPABASE_KEY,
+          'Authorization':'Bearer '+SUPABASE_KEY,
+          'Content-Type':'application/json',
+          'Prefer':'resolution=merge-duplicates,return=minimal'
+        },
+        body:JSON.stringify({
+          endpoint:j.endpoint,
+          p256dh:j.keys.p256dh,
+          auth:j.keys.auth,
+          user_agent:navigator.userAgent,
+          updated_at:new Date().toISOString()
+        })
+      });
+      if(!r.ok) throw new Error('opslaan van meldingen is niet gelukt');
+    }
+
+    async function getSubscription(){
+      if(!reg) throw new Error('service worker is nog niet klaar');
+      let sub=await reg.pushManager.getSubscription();
+      if(sub) await sub.unsubscribe();
+      sub=await reg.pushManager.subscribe({
+        userVisibleOnly:true,
+        applicationServerKey:toUint8Array(PUBLIC_KEY)
+      });
+      await saveSubscription(sub);
+      return sub;
     }
 
     function updateStatus(){
@@ -80,79 +87,52 @@
       $('status').className='small '+(p==='granted'?'ok':'warn');
     }
 
-    async function getSubscription(){
-      if(!reg) throw new Error('service worker is nog niet klaar');
-      let sub=await reg.pushManager.getSubscription();
-      if(!sub){
-        sub=await reg.pushManager.subscribe({
-          userVisibleOnly:true,
-          applicationServerKey:toUint8Array(PUBLIC_KEY)
-        });
+    async function init(){
+      if('serviceWorker' in navigator){
+        reg=await navigator.serviceWorker.register('/sw.js');
+        await navigator.serviceWorker.ready;
       }
-      return sub;
+      updateStatus();
     }
 
     $('enable').onclick=async()=>{
       try{
         const p=await Notification.requestPermission();
-        if(p==='granted') await getSubscription();
-        updateStatus();
-      }catch(e){$('status').textContent=e.message}
+        if(p==='granted'){
+          await getSubscription();
+          $('status').textContent='meldingen staan aan en dit toestel is aangemeld ✅';
+          $('status').className='small ok';
+        } else updateStatus();
+      }catch(e){
+        $('status').textContent=e.message;
+        $('status').className='small warn';
+      }
     };
 
-    $('test').onclick=()=>{
+    $('selftest').onclick=()=>{
       if(Notification.permission!=='granted') return alert('zet eerst meldingen aan');
       reg.showNotification('Dean Weekplanner',{body:'testmelding werkt ✅',icon:'/icon.svg',data:{url:'/'}})
     };
 
-    $('make').onclick=async()=>{
+    $('broadcast').onclick=async()=>{
       try{
-        const sub=await getSubscription();
-        const code=btoa(unescape(encodeURIComponent(JSON.stringify(sub.toJSON()))));
-        $('mine').style.display='block';
-        $('mine').textContent=code;
-        navigator.clipboard?.writeText(code);
-      }catch(e){
-        $('mine').style.display='block';
-        $('mine').textContent=e.message;
-      }
-    };
-
-    $('save').onclick=()=>{
-      try{
-        const obj=JSON.parse(decodeURIComponent(escape(atob($('peer').value.trim()))));
-        if(!obj.endpoint||!obj.keys) throw new Error();
-        localStorage.peerSubscription=JSON.stringify(obj);
-        $('peerStatus').textContent='gekoppeld ✅';
-        $('peerStatus').className='small ok';
-      }catch{
-        $('peerStatus').textContent='de code klopt niet';
-        $('peerStatus').className='small warn';
-      }
-    };
-
-    $('send').onclick=async()=>{
-      try{
-        const raw=localStorage.peerSubscription;
-        if(!raw) throw new Error('koppel eerst de ander');
-        const role=localStorage.role||'iemand';
+        $('broadcastStatus').textContent='versturen...';
         const r=await fetch('/api/push',{
           method:'POST',
-          headers:{'content-type':'application/json'},
+          headers:{'Content-Type':'application/json'},
           body:JSON.stringify({
-            subscription:JSON.parse(raw),
             title:'Dean Weekplanner',
-            body:'testmelding van '+role+' ✅',
+            body:'testmelding naar iedereen ✅',
             url:'/'
           })
         });
         const data=await r.json();
         if(!r.ok) throw new Error(data.error||'versturen mislukt');
-        $('sendStatus').textContent='verstuurd ✅';
-        $('sendStatus').className='small ok';
+        $('broadcastStatus').textContent='verstuurd naar '+data.sent+' toestel(len) ✅';
+        $('broadcastStatus').className='small ok';
       }catch(e){
-        $('sendStatus').textContent=e.message;
-        $('sendStatus').className='small warn';
+        $('broadcastStatus').textContent=e.message;
+        $('broadcastStatus').className='small warn';
       }
     };
 
