@@ -5,140 +5,185 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#0b1220">
   <link rel="manifest" href="/manifest.webmanifest">
-  <title>Dean Weekplanner Push</title>
+  <link rel="apple-touch-icon" href="/icon.svg">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Dean Weekplanner">
+  <title>Dean Weekplanner</title>
   <style>
-    body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:0;background:#f5f7fb;color:#101828}
-    .wrap{max-width:680px;margin:auto;padding:20px}
-    .card{background:#fff;border-radius:18px;padding:18px;margin:14px 0;box-shadow:0 6px 24px #10182812}
-    button{font:inherit;border-radius:12px;padding:12px;background:#111827;color:#fff;border:0;font-weight:650;cursor:pointer;margin:4px 4px 4px 0}
-    .muted{color:#667085}.ok{color:#067647}.warn{color:#b54708}.small{font-size:13px}
+    :root{--bg:#f5f7fb;--card:#fff;--text:#101828;--muted:#667085;--line:#e4e7ec;--dark:#111827}
+    *{box-sizing:border-box}
+    body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:0;background:var(--bg);color:var(--text)}
+    header{position:sticky;top:0;z-index:20;background:rgba(245,247,251,.95);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+    .bar{max-width:1100px;margin:auto;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .brand{font-weight:800}.tabs{display:flex;gap:8px}
+    .tab{font:inherit;border:1px solid var(--line);background:#fff;color:#111827;border-radius:12px;padding:9px 12px;font-weight:700;cursor:pointer}
+    .tab.active{background:#111827;color:#fff;border-color:#111827}
+    .wrap{max-width:1100px;margin:auto;padding:16px}
+    .panel{display:none}.panel.active{display:block}
+    .card{background:var(--card);border-radius:18px;padding:18px;margin:14px 0;box-shadow:0 6px 24px #10182812}
+    button{font:inherit;border-radius:12px;padding:12px;background:#111827;color:#fff;border:0;font-weight:700;cursor:pointer;margin:4px 4px 4px 0}
+    .muted{color:var(--muted)}.ok{color:#067647}.warn{color:#b54708}.small{font-size:13px}
+    .plannerbox{height:calc(100vh - 128px);min-height:640px;border-radius:18px;overflow:hidden;background:#fff;box-shadow:0 6px 24px #10182812}
+    iframe{width:100%;height:100%;border:0;background:#fff}
+    .fallback{padding:12px 2px;font-size:14px;color:var(--muted)}
+    a.link{color:#344054;font-weight:700}
+    @media(max-width:640px){.bar{align-items:flex-start;flex-direction:column}.tabs{width:100%}.tab{flex:1}.plannerbox{height:calc(100vh - 170px);min-height:560px}}
   </style>
 </head>
 <body>
-<div class="wrap">
-  <h1>Dean Weekplanner</h1>
-  <p class="muted">Pushmeldingen</p>
-
-  <div class="card">
-    <h2>meldingen aanzetten</h2>
-    <p class="muted">iedereen die hier één keer op drukt krijgt daarna automatisch de meldingen</p>
-    <button id="enable">meldingen aanzetten</button>
-    <button id="selftest">test op dit toestel</button>
-    <p id="status" class="small"></p>
+<header>
+  <div class="bar">
+    <div><div class="brand">DEAN WEEKPLANNER</div><div class="small muted">golf · school · balans</div></div>
+    <div class="tabs">
+      <button class="tab active" data-tab="planning">Planning</button>
+      <button class="tab" data-tab="meldingen">Meldingen</button>
+    </div>
   </div>
+</header>
 
-  <div class="card">
-    <h2>test naar iedereen</h2>
-    <p class="muted">hiermee testen we of alle aangemelde telefoons een pushmelding krijgen</p>
-    <button id="broadcast">stuur test naar iedereen</button>
-    <p id="broadcastStatus" class="small"></p>
-  </div>
+<main class="wrap">
+  <section id="planning" class="panel active">
+    <div class="plannerbox">
+      <iframe
+        src="https://dean-weekplanner.tjanssens123.chatgpt.site/"
+        title="Dean Weekplanner planning"
+        loading="eager"
+        allow="clipboard-read; clipboard-write"
+      ></iframe>
+    </div>
+    <div class="fallback">Zie je hierboven geen planning? <a class="link" href="https://dean-weekplanner.tjanssens123.chatgpt.site/" target="_blank" rel="noopener">Open je huidige planning hier</a>. Je bestaande planning zelf wordt niet aangepast.</div>
+  </section>
 
-  <script>
-    const PUBLIC_KEY='BBtMg90-ouJN-M5Hobgj73W8b2hZGVG4GKMd321J5hCN0AAMf1aqWPn3JZgX6zGXrjXDxGqH-T1qkoeWnBXUSOg';
-    const SUPABASE_URL='https://kfrruzezmdiaoekucmnl.supabase.co';
-    const SUPABASE_KEY='sb_publishable_4Mx8mLcyFuwbLezyqYVZLA_lO8_zsTe';
-    const $=id=>document.getElementById(id);
-    let reg;
+  <section id="meldingen" class="panel">
+    <div class="card">
+      <h2>Meldingen aanzetten</h2>
+      <p class="muted">iedereen die hier één keer op drukt krijgt daarna automatisch de meldingen</p>
+      <button id="enable">meldingen aanzetten</button>
+      <button id="selftest">test op dit toestel</button>
+      <p id="status" class="small"></p>
+    </div>
 
-    function toUint8Array(value){
-      const padding='='.repeat((4-value.length%4)%4);
-      const base64=(value+padding).replace(/-/g,'+').replace(/_/g,'/');
-      const raw=atob(base64);
-      return Uint8Array.from([...raw].map(c=>c.charCodeAt(0)));
+    <div class="card">
+      <h2>Test naar iedereen</h2>
+      <p class="muted">hiermee testen we of alle aangemelde telefoons een pushmelding krijgen</p>
+      <button id="broadcast">stuur test naar iedereen</button>
+      <p id="broadcastStatus" class="small"></p>
+    </div>
+  </section>
+</main>
+
+<script>
+  const PUBLIC_KEY='BBtMg90-ouJN-M5Hobgj73W8b2hZGVG4GKMd321J5hCN0AAMf1aqWPn3JZgX6zGXrjXDxGqH-T1qkoeWnBXUSOg';
+  const SUPABASE_URL='https://kfrruzezmdiaoekucmnl.supabase.co';
+  const SUPABASE_KEY='sb_publishable_4Mx8mLcyFuwbLezyqYVZLA_lO8_zsTe';
+  const $=id=>document.getElementById(id);
+  let reg;
+
+  document.querySelectorAll('.tab').forEach(btn=>btn.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
+  }));
+
+  function toUint8Array(value){
+    const padding='='.repeat((4-value.length%4)%4);
+    const base64=(value+padding).replace(/-/g,'+').replace(/_/g,'/');
+    const raw=atob(base64);
+    return Uint8Array.from([...raw].map(c=>c.charCodeAt(0)));
+  }
+
+  async function saveSubscription(sub){
+    const j=sub.toJSON();
+    const r=await fetch(SUPABASE_URL+'/rest/v1/rpc/register_push_subscription',{
+      method:'POST',
+      headers:{
+        'apikey':SUPABASE_KEY,
+        'Authorization':'Bearer '+SUPABASE_KEY,
+        'Content-Type':'application/json'
+      },
+      body:JSON.stringify({
+        p_endpoint:j.endpoint,
+        p_p256dh:j.keys.p256dh,
+        p_auth:j.keys.auth,
+        p_user_agent:navigator.userAgent
+      })
+    });
+    if(!r.ok) throw new Error('opslaan van meldingen is niet gelukt');
+  }
+
+  async function getSubscription(){
+    if(!reg) throw new Error('service worker is nog niet klaar');
+    let sub=await reg.pushManager.getSubscription();
+    if(sub) await sub.unsubscribe();
+    sub=await reg.pushManager.subscribe({
+      userVisibleOnly:true,
+      applicationServerKey:toUint8Array(PUBLIC_KEY)
+    });
+    await saveSubscription(sub);
+    return sub;
+  }
+
+  function updateStatus(){
+    if(!('Notification' in window)){
+      $('status').textContent='meldingen worden hier nog niet ondersteund. op iPhone: open deze app vanaf je beginscherm';
+      $('status').className='small warn';
+      return;
     }
+    const p=Notification.permission;
+    $('status').textContent=p==='granted'?'meldingen staan aan ✅':p==='denied'?'meldingen zijn geblokkeerd':'meldingen staan nog niet aan';
+    $('status').className='small '+(p==='granted'?'ok':'warn');
+  }
 
-    async function saveSubscription(sub){
-      const j=sub.toJSON();
-      const r=await fetch(SUPABASE_URL+'/rest/v1/rpc/register_push_subscription',{
+  async function init(){
+    if('serviceWorker' in navigator){
+      reg=await navigator.serviceWorker.register('/sw.js');
+      await navigator.serviceWorker.ready;
+    }
+    updateStatus();
+  }
+
+  $('enable').onclick=async()=>{
+    try{
+      if(!('Notification' in window)) throw new Error('op iPhone moet je deze app vanaf je beginscherm openen');
+      const p=await Notification.requestPermission();
+      if(p==='granted'){
+        await getSubscription();
+        $('status').textContent='meldingen staan aan en dit toestel is aangemeld ✅';
+        $('status').className='small ok';
+      } else updateStatus();
+    }catch(e){
+      $('status').textContent=e.message;
+      $('status').className='small warn';
+    }
+  };
+
+  $('selftest').onclick=()=>{
+    if(!('Notification' in window)) return alert('open de app vanaf je beginscherm');
+    if(Notification.permission!=='granted') return alert('zet eerst meldingen aan');
+    reg.showNotification('Dean Weekplanner',{body:'testmelding werkt ✅',icon:'/icon.svg',data:{url:'/'}})
+  };
+
+  $('broadcast').onclick=async()=>{
+    try{
+      $('broadcastStatus').textContent='versturen...';
+      const r=await fetch('/api/push',{
         method:'POST',
-        headers:{
-          'apikey':SUPABASE_KEY,
-          'Authorization':'Bearer '+SUPABASE_KEY,
-          'Content-Type':'application/json'
-        },
-        body:JSON.stringify({
-          p_endpoint:j.endpoint,
-          p_p256dh:j.keys.p256dh,
-          p_auth:j.keys.auth,
-          p_user_agent:navigator.userAgent
-        })
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({title:'Dean Weekplanner',body:'testmelding naar iedereen ✅',url:'/'})
       });
-      if(!r.ok){
-        const t=await r.text();
-        throw new Error('opslaan van meldingen is niet gelukt');
-      }
+      const data=await r.json();
+      if(!r.ok) throw new Error(data.error||'versturen mislukt');
+      $('broadcastStatus').textContent='verstuurd naar '+data.sent+' toestel(len) ✅';
+      $('broadcastStatus').className='small ok';
+    }catch(e){
+      $('broadcastStatus').textContent=e.message;
+      $('broadcastStatus').className='small warn';
     }
+  };
 
-    async function getSubscription(){
-      if(!reg) throw new Error('service worker is nog niet klaar');
-      let sub=await reg.pushManager.getSubscription();
-      if(sub) await sub.unsubscribe();
-      sub=await reg.pushManager.subscribe({
-        userVisibleOnly:true,
-        applicationServerKey:toUint8Array(PUBLIC_KEY)
-      });
-      await saveSubscription(sub);
-      return sub;
-    }
-
-    function updateStatus(){
-      if(!('Notification' in window)){ $('status').textContent='meldingen worden hier nog niet ondersteund. op iPhone: zet de site eerst op je beginscherm en open hem vanaf daar'; $('status').className='small warn'; return; } const p=Notification.permission;
-      $('status').textContent=p==='granted'?'meldingen staan aan ✅':p==='denied'?'meldingen zijn geblokkeerd':'meldingen staan nog niet aan';
-      $('status').className='small '+(p==='granted'?'ok':'warn');
-    }
-
-    async function init(){
-      if('serviceWorker' in navigator){
-        reg=await navigator.serviceWorker.register('/sw.js');
-        await navigator.serviceWorker.ready;
-      }
-      updateStatus();
-    }
-
-    $('enable').onclick=async()=>{
-      try{
-        if(!('Notification' in window)){ throw new Error('meldingen zijn hier niet beschikbaar. op iPhone moet je de site eerst op je beginscherm zetten en hem vanaf daar openen'); } const p=await Notification.requestPermission();
-        if(p==='granted'){
-          await getSubscription();
-          $('status').textContent='meldingen staan aan en dit toestel is aangemeld ✅';
-          $('status').className='small ok';
-        } else updateStatus();
-      }catch(e){
-        $('status').textContent=e.message;
-        $('status').className='small warn';
-      }
-    };
-
-    $('selftest').onclick=()=>{
-      if(!('Notification' in window)) return alert('op iPhone: zet de site eerst op je beginscherm en open hem vanaf daar'); if(Notification.permission!=='granted') return alert('zet eerst meldingen aan');
-      reg.showNotification('Dean Weekplanner',{body:'testmelding werkt ✅',icon:'/icon.svg',data:{url:'/'}})
-    };
-
-    $('broadcast').onclick=async()=>{
-      try{
-        $('broadcastStatus').textContent='versturen...';
-        const r=await fetch('/api/push',{
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({
-            title:'Dean Weekplanner',
-            body:'testmelding naar iedereen ✅',
-            url:'/'
-          })
-        });
-        const data=await r.json();
-        if(!r.ok) throw new Error(data.error||'versturen mislukt');
-        $('broadcastStatus').textContent='verstuurd naar '+data.sent+' toestel(len) ✅';
-        $('broadcastStatus').className='small ok';
-      }catch(e){
-        $('broadcastStatus').textContent=e.message;
-        $('broadcastStatus').className='small warn';
-      }
-    };
-
-    init();
-  </script>
-</div>
+  init();
+</script>
 </body>
 </html>
