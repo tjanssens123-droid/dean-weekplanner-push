@@ -82,7 +82,7 @@
     }
 
     function updateStatus(){
-      const p=Notification.permission;
+      if(!('Notification' in window)){ $('status').textContent='meldingen worden hier nog niet ondersteund. op iPhone: zet de site eerst op je beginscherm en open hem vanaf daar'; $('status').className='small warn'; return; } const p=Notification.permission;
       $('status').textContent=p==='granted'?'meldingen staan aan ✅':p==='denied'?'meldingen zijn geblokkeerd':'meldingen staan nog niet aan';
       $('status').className='small '+(p==='granted'?'ok':'warn');
     }
@@ -97,7 +97,7 @@
 
     $('enable').onclick=async()=>{
       try{
-        const p=await Notification.requestPermission();
+        if(!('Notification' in window)){ throw new Error('meldingen zijn hier niet beschikbaar. op iPhone moet je de site eerst op je beginscherm zetten en hem vanaf daar openen'); } const p=await Notification.requestPermission();
         if(p==='granted'){
           await getSubscription();
           $('status').textContent='meldingen staan aan en dit toestel is aangemeld ✅';
@@ -110,7 +110,7 @@
     };
 
     $('selftest').onclick=()=>{
-      if(Notification.permission!=='granted') return alert('zet eerst meldingen aan');
+      if(!('Notification' in window)) return alert('op iPhone: zet de site eerst op je beginscherm en open hem vanaf daar'); if(Notification.permission!=='granted') return alert('zet eerst meldingen aan');
       reg.showNotification('Dean Weekplanner',{body:'testmelding werkt ✅',icon:'/icon.svg',data:{url:'/'}})
     };
 
