@@ -34,21 +34,7 @@
     .planner-section{display:block;position:relative}
     .plannerbox{height:100vh;min-height:100vh;border-radius:0;box-shadow:none}
     .fallback{display:none}
-    .notif-fab{
-      position:fixed;z-index:9999;top:14px;right:58px;
-      width:38px;height:38px;border-radius:10px;padding:0;margin:0;
-      display:flex;align-items:center;justify-content:center;
-      background:#fff;color:#111827;border:1px solid #e4e7ec;
-      box-shadow:0 2px 8px #1018281f;font-size:18px
-    }
-    .notif-popover{
-      position:fixed;z-index:10000;top:58px;right:14px;width:min(330px,calc(100vw - 28px));
-      background:#fff;border:1px solid #e4e7ec;border-radius:16px;padding:14px;
-      box-shadow:0 16px 40px #1018282b
-    }
-    .notif-title{font-weight:800;margin-bottom:8px}
-    .notif-popover[hidden]{display:none}
-    @media(max-width:640px){
+@media(max-width:640px){
       .notif-fab{top:12px;right:52px}
       .plannerbox{height:100vh;min-height:100vh}
     }
@@ -57,15 +43,6 @@
 <body>
 <main class="wrap planner-main">
   <section id="planning" class="panel active planner-section">
-    <button id="notifToggle" class="notif-fab" aria-label="Meldingen">🔔</button>
-    <div id="notifPopover" class="notif-popover" hidden>
-      <div class="notif-title">Meldingen</div>
-      <button id="enable">meldingen aanzetten</button>
-      <button id="selftest">test op dit toestel</button>
-      <button id="broadcast">stuur test naar iedereen</button>
-      <p id="status" class="small"></p>
-      <p id="broadcastStatus" class="small"></p>
-    </div>
     <div class="plannerbox">
       <iframe
         src="https://dean-weekplanner.tjanssens123.chatgpt.site/"
@@ -84,17 +61,6 @@
   const SUPABASE_KEY='sb_publishable_4Mx8mLcyFuwbLezyqYVZLA_lO8_zsTe';
   const $=id=>document.getElementById(id);
   let reg;
-
-  const notifToggle=document.getElementById('notifToggle');
-  const notifPopover=document.getElementById('notifPopover');
-  notifToggle.addEventListener('click',()=>{
-    notifPopover.hidden=!notifPopover.hidden;
-  });
-  document.addEventListener('click',(e)=>{
-    if(!notifPopover.hidden && !notifPopover.contains(e.target) && e.target!==notifToggle){
-      notifPopover.hidden=true;
-    }
-  });
 function toUint8Array(value){
     const padding='='.repeat((4-value.length%4)%4);
     const base64=(value+padding).replace(/-/g,'+').replace(/_/g,'/');
