@@ -5,7 +5,7 @@ module.exports=async function handler(req,res){
 
   try{
     const privateKey=process.env.VAPID_PRIVATE_KEY;
-    const publicKey='BEEJ8Df02qGOiULnqzik3ai-Q3DJv9CNyvnF6xTOAzDNaAR6PcDiV8qAbrHmqtsbi1dOaScybb3YHliub5NZzcw';
+    const publicKey='BObb6n6nKudoCroBQjJ2ChDZtlImPLfsaOXNpuX7qksoqvnQmy0vBH2_ubTMDAvVj-FGY9mpA5OSjg9ZZAEqn5U';
 
     if(!privateKey){
       return res.status(503).json({error:'VAPID_PRIVATE_KEY ontbreekt in Vercel'});
