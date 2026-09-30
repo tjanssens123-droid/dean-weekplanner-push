@@ -1,163 +1,351 @@
 <!doctype html>
 <html lang="nl">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#0b1220">
-  <link rel="manifest" href="/manifest.webmanifest">
-  <link rel="apple-touch-icon" href="/icon.svg">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="Dean Weekplanner">
-  <title>Dean Weekplanner</title>
-  <style>
-    :root{--bg:#f5f7fb;--card:#fff;--text:#101828;--muted:#667085;--line:#e4e7ec;--dark:#111827}
-    *{box-sizing:border-box}
-    body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:0;background:var(--bg);color:var(--text)}
-    header{position:sticky;top:0;z-index:20;background:rgba(245,247,251,.95);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
-    .bar{max-width:1100px;margin:auto;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px}
-    .brand{font-weight:800}.tabs{display:flex;gap:8px}
-    .tab{font:inherit;border:1px solid var(--line);background:#fff;color:#111827;border-radius:12px;padding:9px 12px;font-weight:700;cursor:pointer}
-    .tab.active{background:#111827;color:#fff;border-color:#111827}
-    .wrap{max-width:1100px;margin:auto;padding:16px}
-    .panel{display:none}.panel.active{display:block}
-    .card{background:var(--card);border-radius:18px;padding:18px;margin:14px 0;box-shadow:0 6px 24px #10182812}
-    button{font:inherit;border-radius:12px;padding:12px;background:#111827;color:#fff;border:0;font-weight:700;cursor:pointer;margin:4px 4px 4px 0}
-    .muted{color:var(--muted)}.ok{color:#067647}.warn{color:#b54708}.small{font-size:13px}
-    .plannerbox{height:calc(100vh - 128px);min-height:640px;border-radius:18px;overflow:hidden;background:#fff;box-shadow:0 6px 24px #10182812}
-    iframe{width:100%;height:100%;border:0;background:#fff}
-    .fallback{padding:12px 2px;font-size:14px;color:var(--muted)}
-    a.link{color:#344054;font-weight:700}
-    @media(max-width:640px){.bar{align-items:flex-start;flex-direction:column}.tabs{width:100%}.tab{flex:1}.plannerbox{height:calc(100vh - 170px);min-height:560px}}
-  
-    .planner-main{max-width:none;padding:0;position:relative}
-    .planner-section{display:block;position:relative}
-    .plannerbox{height:100vh;min-height:100vh;border-radius:0;box-shadow:none}
-    .fallback{display:none}
-@media(max-width:640px){
-      .notif-fab{top:12px;right:52px}
-      .plannerbox{height:100vh;min-height:100vh}
-    }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#062c22">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/icon.svg">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mijn Golfweek">
+<title>Mijn Golfweek</title>
+<style>
+:root{
+  --green:#062c22;--green2:#0a3a2e;--lime:#d9ff55;--lime2:#c8ef46;
+  --bg:#fff;--soft:#f6f8f7;--line:#e6eae8;--text:#12221c;--muted:#6d7873;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:#fff;color:var(--text)}
+button,input{font:inherit}
+button{cursor:pointer}
+.hidden{display:none!important}
+
+/* login */
+.login-screen{min-height:100vh;background:linear-gradient(180deg,#062c22 0,#0b392d 52%,#f7f9f8 52%);display:flex;align-items:center;justify-content:center;padding:24px}
+.login-card{width:min(420px,100%);background:#fff;border-radius:28px;padding:28px;box-shadow:0 20px 70px #0004}
+.login-logo{width:48px;height:48px;border-radius:14px;background:var(--lime);display:grid;place-items:center;font-size:27px;margin-bottom:18px}
+.login-card h1{margin:0 0 8px;font-size:30px}
+.login-card p{margin:0 0 22px;color:var(--muted)}
+.field{margin:12px 0}
+.field label{display:block;font-size:13px;font-weight:750;margin-bottom:6px}
+.field input{width:100%;padding:14px 15px;border:1px solid #d9dfdc;border-radius:14px;background:#fbfcfb;font-size:17px;outline:none}
+.code-input{letter-spacing:8px;font-weight:800;text-align:center;font-size:24px!important}
+.primary{width:100%;border:0;border-radius:14px;padding:14px 16px;background:var(--green);color:white;font-weight:800;margin-top:8px}
+.login-error{min-height:20px;color:#b42318;font-size:13px;margin-top:10px}
+
+/* shell */
+.app{min-height:100vh;background:white}
+.topbar{background:var(--green);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:14px 22px;min-height:80px;position:sticky;top:0;z-index:50}
+.brand{display:flex;align-items:center;gap:12px}
+.brand-mark{width:37px;height:37px;border-radius:11px;background:var(--lime);display:grid;place-items:center;color:var(--green);font-weight:900}
+.brand-title{font-size:22px;font-weight:850;letter-spacing:.2px}
+.actions{display:flex;align-items:center;gap:10px}
+.icon-btn,.team-btn{border:0;background:transparent;color:#fff;padding:10px;border-radius:12px;font-weight:800}
+.icon-btn:hover,.team-btn:hover{background:#ffffff12}
+.team-btn{display:flex;align-items:center;gap:8px}
+.icon-btn{font-size:20px;line-height:1}
+.logout{font-size:22px}
+.nav{height:64px;display:flex;align-items:end;justify-content:space-around;border-bottom:1px solid var(--line);background:#fff;position:sticky;top:80px;z-index:40}
+.nav button{height:64px;border:0;background:transparent;color:#767f7b;font-weight:780;padding:0 18px;border-bottom:3px solid transparent}
+.nav button.active{color:var(--green);border-bottom-color:var(--green)}
+.page{display:none;max-width:1180px;margin:auto;padding:34px 34px 80px}
+.page.active{display:block}
+.eyebrow{font-size:13px;font-weight:850;letter-spacing:1.4px;color:#527164;text-transform:uppercase}
+.hero{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:22px}
+.hero h2{font-size:44px;line-height:1.06;margin:6px 0}
+.hero p{margin:0;color:var(--muted)}
+.date-big{text-align:right;font-size:50px;font-weight:850;line-height:1}
+.date-big span{display:block;font-size:14px;font-weight:650;color:#6c7672;margin-bottom:4px}
+.date-big small{font-size:13px;color:#89918e}
+.card{border:1px solid var(--line);border-radius:24px;padding:24px;background:#fff;box-shadow:0 1px 0 #00000008}
+.card h3{margin:0 0 4px;font-size:23px}
+.sub{color:#78817d;font-size:13px}
+.focus{margin-top:20px;border:1px solid #afd68e;background:#f6fff1;border-radius:15px;padding:16px;font-weight:800}
+.item{display:grid;grid-template-columns:110px 62px 1fr auto;align-items:center;gap:18px;padding:20px 0;border-bottom:1px solid var(--line)}
+.item:last-child{border-bottom:0}
+.time{font-size:23px;font-weight:650}
+.duration{font-size:12px;color:#7b8580}
+.badge{font-size:12px;font-weight:850;border-radius:999px;padding:7px 10px;background:#eef1f0;width:max-content}
+.item-title{font-weight:850;font-size:19px}
+.item-sub{font-size:13px;color:#79827e;margin-top:4px}
+.tag{font-size:12px;font-weight:850;border-radius:999px;padding:8px 11px;background:#f0f2f1}
+.note{margin-top:18px;background:#f5f6f6;border-radius:15px;padding:16px;color:#69736e;font-size:13px}
+.placeholder{padding:28px;border:1px dashed #cbd3cf;border-radius:18px;color:#65706b;background:#fafbfb}
+.planner-frame{height:70vh;border:1px solid var(--line);border-radius:20px;overflow:hidden;background:#fafafa}
+.planner-frame iframe{width:100%;height:100%;border:0}
+
+/* popovers */
+.pop{position:fixed;right:18px;top:72px;width:min(360px,calc(100vw - 28px));background:#fff;color:var(--text);border:1px solid var(--line);border-radius:20px;padding:16px;box-shadow:0 18px 55px #061d1740;z-index:100}
+.pop h4{margin:0 0 6px;font-size:18px}
+.pop p{color:var(--muted);font-size:13px;margin:5px 0 12px}
+.pop .row{display:flex;gap:8px}
+.pop button{border:0;border-radius:12px;padding:11px 12px;background:var(--green);color:#fff;font-weight:800}
+.pop .secondary{background:#edf1ef;color:var(--green)}
+.status{font-size:12px;margin-top:9px}
+.member{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line)}
+.member:last-child{border-bottom:0}
+.member-name{font-weight:780}.role{font-size:11px;color:#76807b}
+.remove{background:#fff0ee!important;color:#b42318!important;padding:7px 9px!important}
+.invite-code{font-size:34px;font-weight:900;letter-spacing:7px;text-align:center;background:#f4f7f5;border-radius:14px;padding:12px;margin:10px 0}
+
+@media(max-width:760px){
+ .topbar{padding:12px 12px;min-height:66px}.brand-title{font-size:18px}.team-btn span{display:none}.actions{gap:2px}.icon-btn{padding:9px}
+ .nav{top:66px;height:58px}.nav button{height:58px;padding:0 10px;font-size:13px}
+ .page{padding:24px 16px 70px}.hero{align-items:flex-start}.hero h2{font-size:32px}.date-big{font-size:38px}
+ .item{grid-template-columns:80px 54px 1fr;gap:10px}.tag{grid-column:3}.time{font-size:19px}
+}
+</style>
 </head>
 <body>
-<main class="wrap planner-main">
-  <section id="planning" class="panel active planner-section">
-    <div class="plannerbox">
-      <iframe
-        src="https://dean-weekplanner.tjanssens123.chatgpt.site/"
-        title="Dean Weekplanner planning"
-        loading="eager"
-        allow="clipboard-read; clipboard-write"
-      ></iframe>
+
+<section id="loginScreen" class="login-screen">
+  <div class="login-card">
+    <div class="login-logo">⛳</div>
+    <h1>Mijn Golfweek</h1>
+    <p>Voer je eenmalige 4-cijferige uitnodigingscode in. Daarna blijft dit toestel ingelogd.</p>
+    <div class="field">
+      <label>Naam</label>
+      <input id="loginName" maxlength="40" placeholder="Bijv. Stefan">
     </div>
-    <div class="fallback">Zie je hierboven geen planning? <a class="link" href="https://dean-weekplanner.tjanssens123.chatgpt.site/" target="_blank" rel="noopener">Open je huidige planning hier</a>. Je bestaande planning zelf wordt niet aangepast.</div>
-  </section>
-</main>
+    <div class="field">
+      <label>4-cijferige code</label>
+      <input id="loginCode" class="code-input" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="••••">
+    </div>
+    <button id="loginBtn" class="primary">Doorgaan</button>
+    <div id="loginError" class="login-error"></div>
+  </div>
+</section>
+
+<div id="app" class="app hidden">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">⛳</div>
+      <div class="brand-title">Mijn Golfweek</div>
+    </div>
+    <div class="actions">
+      <button id="teamBtn" class="team-btn" title="Team">👥 <span>Team</span></button>
+      <button id="phoneBtn" class="icon-btn" title="Telefoon">▣</button>
+      <button id="bellBtn" class="icon-btn" title="Meldingen">🔔</button>
+      <button id="logoutBtn" class="icon-btn logout" title="Uitloggen">↪</button>
+    </div>
+  </header>
+
+  <nav class="nav">
+    <button class="navbtn active" data-page="vandaag">Vandaag</button>
+    <button class="navbtn" data-page="planning">Planning</button>
+    <button class="navbtn" data-page="trainingen">Trainingen</button>
+    <button class="navbtn" data-page="feedback">Feedback</button>
+  </nav>
+
+  <main>
+    <section id="vandaag" class="page active">
+      <div class="hero">
+        <div>
+          <div class="eyebrow">Woensdag</div>
+          <h2>Goedemorgen, Dean!</h2>
+          <p>Je hebt 4 geplande activiteiten vandaag.</p>
+        </div>
+        <div class="date-big"><span>SEPTEMBER</span>30<small>2026</small></div>
+      </div>
+      <div class="card">
+        <h3>Vandaag op de planning</h3>
+        <div class="sub">4 activiteiten</div>
+        <div class="focus">🎯 Focus: geen concrete focus voor vandaag.</div>
+
+        <div class="item"><div><div class="time">08:00</div><div class="duration">1 uur</div></div><div class="badge">GYM</div><div><div class="item-title">Gym</div><div class="item-sub">08:00 – 09:00</div></div><div class="tag">Gym & fysiek</div></div>
+        <div class="item"><div><div class="time">10:00</div><div class="duration">4 uur</div></div><div class="badge">GOLF</div><div><div class="item-title">Golftraining</div><div class="item-sub">10:00 – 14:00</div></div><div class="tag">Golf</div></div>
+        <div class="item"><div><div class="time">14:00</div><div class="duration">1 uur</div></div><div class="badge">RUST</div><div><div class="item-title">Lunch & herstel</div><div class="item-sub">14:00 – 15:00</div></div><div class="tag">Rust & eten</div></div>
+        <div class="item"><div><div class="time">15:00</div><div class="duration">2 uur</div></div><div class="badge">SCHOOL</div><div><div class="item-title">Thuisschool</div><div class="item-sub">15:00 – 17:00</div></div><div class="tag">School</div></div>
+        <div class="note"><b>💡 Tip:</b> tussen je activiteiten is ruimte voor eten, reizen en herstel.</div>
+      </div>
+    </section>
+
+    <section id="planning" class="page">
+      <h2>Planning</h2>
+      <p class="sub">Je bestaande planning blijft voorlopig ongewijzigd terwijl we hem volledig overzetten.</p>
+      <div class="planner-frame"><iframe src="https://dean-weekplanner.tjanssens123.chatgpt.site/" title="Bestaande weekplanner"></iframe></div>
+    </section>
+
+    <section id="trainingen" class="page">
+      <h2>Trainingen</h2>
+      <div class="placeholder">Hier bouwen we je trainingslogboek in. Je huidige trainingen worden niet overschreven.</div>
+    </section>
+
+    <section id="feedback" class="page">
+      <h2>Feedback</h2>
+      <div class="placeholder">Hier komen video's, feedback van Stefan en jouw reacties. Nieuwe feedback kan automatisch een pushmelding versturen.</div>
+    </section>
+  </main>
+
+  <div id="bellPop" class="pop hidden">
+    <h4>🔔 Meldingen</h4>
+    <p>Dit toestel kan meldingen krijgen bij nieuwe video's en feedback.</p>
+    <div class="row">
+      <button id="enableNotifications">Meldingen aanzetten</button>
+      <button id="testNotification" class="secondary">Test</button>
+    </div>
+    <div id="notificationStatus" class="status"></div>
+  </div>
+
+  <div id="teamPop" class="pop hidden">
+    <h4>👥 Team</h4>
+    <p id="teamIntro">Mensen die toegang hebben tot jouw golfweek.</p>
+    <div id="teamList"></div>
+    <div id="ownerControls" class="hidden">
+      <button id="createInvite" style="margin-top:12px">Iemand uitnodigen</button>
+      <div id="inviteBox" class="hidden">
+        <p>Stuur deze code naar de persoon die je wilt uitnodigen. De code werkt één keer.</p>
+        <div id="inviteCode" class="invite-code"></div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script>
-  const PUBLIC_KEY='BBtMg90-ouJN-M5Hobgj73W8b2hZGVG4GKMd321J5hCN0AAMf1aqWPn3JZgX6zGXrjXDxGqH-T1qkoeWnBXUSOg';
-  const SUPABASE_URL='https://kfrruzezmdiaoekucmnl.supabase.co';
-  const SUPABASE_KEY='sb_publishable_4Mx8mLcyFuwbLezyqYVZLA_lO8_zsTe';
-  const $=id=>document.getElementById(id);
-  let reg;
+const SUPABASE_URL='https://kfrruzezmdiaoekucmnl.supabase.co';
+const SUPABASE_KEY='sb_publishable_4Mx8mLcyFuwbLezyqYVZLA_lO8_zsTe';
+const PUBLIC_KEY='BBtMg90-ouJN-M5Hobgj73W8b2hZGVG4GKMd321J5hCN0AAMf1aqWPn3JZgX6zGXrjXDxGqH-T1qkoeWnBXUSOg';
+const qs=s=>document.querySelector(s);
+const qsa=s=>[...document.querySelectorAll(s)];
+let session=null, reg=null;
+
+function deviceToken(){
+  let t=localStorage.getItem('golfweek_device_token');
+  if(!t){
+    const a=new Uint8Array(32); crypto.getRandomValues(a);
+    t=[...a].map(x=>x.toString(16).padStart(2,'0')).join('');
+    localStorage.setItem('golfweek_device_token',t);
+  }
+  return t;
+}
+async function rpc(name,body){
+  const r=await fetch(SUPABASE_URL+'/rest/v1/rpc/'+name,{
+    method:'POST',
+    headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'},
+    body:JSON.stringify(body||{})
+  });
+  const text=await r.text();
+  if(!r.ok) throw new Error(text||'Er ging iets mis');
+  return text?JSON.parse(text):null;
+}
+function showApp(s){
+  session=s;
+  qs('#loginScreen').classList.add('hidden');
+  qs('#app').classList.remove('hidden');
+  if(session.member_role==='owner') qs('#ownerControls').classList.remove('hidden');
+  initPush();
+}
+async function checkSession(){
+  try{
+    const rows=await rpc('get_member_session',{p_device_token:deviceToken()});
+    if(rows&&rows[0]&&rows[0].active) showApp(rows[0]);
+  }catch(e){}
+}
+qs('#loginBtn').onclick=async()=>{
+  qs('#loginError').textContent='';
+  const code=qs('#loginCode').value.replace(/\D/g,'');
+  const name=qs('#loginName').value.trim()||'Teamlid';
+  if(code.length!==4){qs('#loginError').textContent='Vul een 4-cijferige code in.';return}
+  try{
+    let rows;
+    try{
+      rows=await rpc('redeem_invite',{p_code:code,p_device_token:deviceToken(),p_name:name});
+    }catch(e){
+      rows=await rpc('bootstrap_owner',{p_code:code,p_device_token:deviceToken()});
+    }
+    if(!rows||!rows[0]) throw new Error();
+    showApp(rows[0]);
+  }catch(e){
+    qs('#loginError').textContent='Deze code is niet geldig of is al gebruikt.';
+  }
+};
+qs('#logoutBtn').onclick=()=>{
+  localStorage.removeItem('golfweek_device_token');
+  location.reload();
+};
+
+qsa('.navbtn').forEach(b=>b.onclick=()=>{
+  qsa('.navbtn').forEach(x=>x.classList.remove('active'));
+  qsa('.page').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active'); qs('#'+b.dataset.page).classList.add('active');
+});
+function closePops(except){
+  ['#bellPop','#teamPop'].forEach(id=>{if(id!==except)qs(id).classList.add('hidden')});
+}
+qs('#bellBtn').onclick=e=>{e.stopPropagation();closePops('#bellPop');qs('#bellPop').classList.toggle('hidden')};
+qs('#teamBtn').onclick=async e=>{e.stopPropagation();closePops('#teamPop');qs('#teamPop').classList.toggle('hidden');if(!qs('#teamPop').classList.contains('hidden'))await loadTeam()};
+document.addEventListener('click',e=>{
+  if(!qs('#bellPop').contains(e.target)&&e.target!==qs('#bellBtn'))qs('#bellPop').classList.add('hidden');
+  if(!qs('#teamPop').contains(e.target)&&e.target!==qs('#teamBtn'))qs('#teamPop').classList.add('hidden');
+});
+qs('#teamPop').onclick=e=>e.stopPropagation();
+qs('#bellPop').onclick=e=>e.stopPropagation();
+
+async function loadTeam(){
+  try{
+    const rows=await rpc('list_team_members',{p_device_token:deviceToken()});
+    qs('#teamList').innerHTML=rows.map(m=>`
+      <div class="member">
+        <div><div class="member-name">${escapeHtml(m.name)}</div><div class="role">${m.role==='owner'?'Eigenaar':'Teamlid'}</div></div>
+        ${session.member_role==='owner'&&m.role!=='owner'?'<button class="remove" data-id="'+m.id+'">Verwijderen</button>':''}
+      </div>`).join('');
+    qs('#teamList').querySelectorAll('.remove').forEach(btn=>btn.onclick=async()=>{
+      if(!confirm('Dit teamlid verwijderen?'))return;
+      await rpc('remove_team_member',{p_owner_token:deviceToken(),p_member_id:btn.dataset.id});
+      loadTeam();
+    });
+  }catch(e){qs('#teamList').innerHTML='<div class="status warn">Team kon niet worden geladen.</div>'}
+}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
+qs('#createInvite').onclick=async()=>{
+  try{
+    const code=await rpc('create_team_invite',{p_device_token:deviceToken()});
+    qs('#inviteCode').textContent=code;
+    qs('#inviteBox').classList.remove('hidden');
+  }catch(e){alert('Uitnodiging maken is niet gelukt.')}
+};
+
 function toUint8Array(value){
-    const padding='='.repeat((4-value.length%4)%4);
-    const base64=(value+padding).replace(/-/g,'+').replace(/_/g,'/');
-    const raw=atob(base64);
-    return Uint8Array.from([...raw].map(c=>c.charCodeAt(0)));
-  }
+  const padding='='.repeat((4-value.length%4)%4);
+  const base64=(value+padding).replace(/-/g,'+').replace(/_/g,'/');
+  return Uint8Array.from([...atob(base64)].map(c=>c.charCodeAt(0)));
+}
+async function initPush(){
+  if('serviceWorker' in navigator){reg=await navigator.serviceWorker.register('/sw.js');await navigator.serviceWorker.ready}
+  updateNotificationStatus();
+}
+function updateNotificationStatus(){
+  const el=qs('#notificationStatus');
+  if(!('Notification' in window)){el.textContent='Op iPhone: open de app vanaf je beginscherm.';return}
+  el.textContent=Notification.permission==='granted'?'Meldingen staan aan ✅':Notification.permission==='denied'?'Meldingen zijn geblokkeerd':'Meldingen staan nog niet aan';
+}
+async function subscribePush(){
+  if(!('Notification' in window))throw new Error('Open de app vanaf je beginscherm.');
+  const p=await Notification.requestPermission(); if(p!=='granted')return updateNotificationStatus();
+  let sub=await reg.pushManager.getSubscription();
+  if(sub)await sub.unsubscribe();
+  sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:toUint8Array(PUBLIC_KEY)});
+  const j=sub.toJSON();
+  await rpc('register_push_subscription',{
+    p_endpoint:j.endpoint,p_p256dh:j.keys.p256dh,p_auth:j.keys.auth,
+    p_user_agent:navigator.userAgent,p_device_token:deviceToken()
+  });
+  updateNotificationStatus();
+}
+qs('#enableNotifications').onclick=async()=>{try{await subscribePush()}catch(e){qs('#notificationStatus').textContent=e.message}};
+qs('#testNotification').onclick=async()=>{
+  try{
+    if(!('Notification' in window)||Notification.permission!=='granted'){await subscribePush()}
+    const r=await fetch('/api/push',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      title:'Mijn Golfweek',body:'Testmelding werkt ✅',url:'/',deviceToken:deviceToken()
+    })});
+    const d=await r.json(); if(!r.ok)throw new Error(d.error||'Test mislukt');
+    qs('#notificationStatus').textContent='Test verstuurd naar '+d.sent+' toestel(len) ✅';
+  }catch(e){qs('#notificationStatus').textContent=e.message}
+};
 
-  async function saveSubscription(sub){
-    const j=sub.toJSON();
-    const r=await fetch(SUPABASE_URL+'/rest/v1/rpc/register_push_subscription',{
-      method:'POST',
-      headers:{
-        'apikey':SUPABASE_KEY,
-        'Authorization':'Bearer '+SUPABASE_KEY,
-        'Content-Type':'application/json'
-      },
-      body:JSON.stringify({
-        p_endpoint:j.endpoint,
-        p_p256dh:j.keys.p256dh,
-        p_auth:j.keys.auth,
-        p_user_agent:navigator.userAgent
-      })
-    });
-    if(!r.ok) throw new Error('opslaan van meldingen is niet gelukt');
-  }
-
-  async function getSubscription(){
-    if(!reg) throw new Error('service worker is nog niet klaar');
-    let sub=await reg.pushManager.getSubscription();
-    if(sub) await sub.unsubscribe();
-    sub=await reg.pushManager.subscribe({
-      userVisibleOnly:true,
-      applicationServerKey:toUint8Array(PUBLIC_KEY)
-    });
-    await saveSubscription(sub);
-    return sub;
-  }
-
-  function updateStatus(){
-    if(!('Notification' in window)){
-      $('status').textContent='meldingen worden hier nog niet ondersteund. op iPhone: open deze app vanaf je beginscherm';
-      $('status').className='small warn';
-      return;
-    }
-    const p=Notification.permission;
-    $('status').textContent=p==='granted'?'meldingen staan aan ✅':p==='denied'?'meldingen zijn geblokkeerd':'meldingen staan nog niet aan';
-    $('status').className='small '+(p==='granted'?'ok':'warn');
-  }
-
-  async function init(){
-    if('serviceWorker' in navigator){
-      reg=await navigator.serviceWorker.register('/sw.js');
-      await navigator.serviceWorker.ready;
-    }
-    updateStatus();
-  }
-
-  $('enable').onclick=async()=>{
-    try{
-      if(!('Notification' in window)) throw new Error('op iPhone moet je deze app vanaf je beginscherm openen');
-      const p=await Notification.requestPermission();
-      if(p==='granted'){
-        await getSubscription();
-        $('status').textContent='meldingen staan aan en dit toestel is aangemeld ✅';
-        $('status').className='small ok';
-      } else updateStatus();
-    }catch(e){
-      $('status').textContent=e.message;
-      $('status').className='small warn';
-    }
-  };
-
-  $('selftest').onclick=()=>{
-    if(!('Notification' in window)) return alert('open de app vanaf je beginscherm');
-    if(Notification.permission!=='granted') return alert('zet eerst meldingen aan');
-    reg.showNotification('Dean Weekplanner',{body:'testmelding werkt ✅',icon:'/icon.svg',data:{url:'/'}})
-  };
-
-  $('broadcast').onclick=async()=>{
-    try{
-      $('broadcastStatus').textContent='versturen...';
-      const r=await fetch('/api/push',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({title:'Dean Weekplanner',body:'testmelding naar iedereen ✅',url:'/'})
-      });
-      const data=await r.json();
-      if(!r.ok) throw new Error(data.error||'versturen mislukt');
-      $('broadcastStatus').textContent='verstuurd naar '+data.sent+' toestel(len) ✅';
-      $('broadcastStatus').className='small ok';
-    }catch(e){
-      $('broadcastStatus').textContent=e.message;
-      $('broadcastStatus').className='small warn';
-    }
-  };
-
-  init();
+checkSession();
 </script>
 </body>
 </html>
