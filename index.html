@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0b1220">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <title>Dean Weekplanner Push</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:0;background:#f5f7fb;color:#101828}
+    .wrap{max-width:680px;margin:auto;padding:20px}.card{background:#fff;border-radius:18px;padding:18px;margin:14px 0;box-shadow:0 6px 24px #10182812}
+    button,select,textarea{font:inherit;border-radius:12px;padding:12px}button{background:#111827;color:#fff;border:0;font-weight:650;cursor:pointer}
+    select,textarea{border:1px solid #d0d5dd;width:100%;box-sizing:border-box}.muted{color:#667085}.ok{color:#067647}.warn{color:#b54708}.small{font-size:13px}
+    .code{word-break:break-all;background:#f2f4f7;padding:10px;border-radius:10px}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Dean Weekplanner</h1>
+  <p class="muted">Pushmeldingen voor Dean en Stefan</p>
+
+  <div class="card">
+    <h2>wie ben jij</h2>
+    <select id="role">
+      <option value="">kies gebruiker</option>
+      <option value="Dean">Dean</option>
+      <option value="Stefan">Stefan</option>
+    </select>
+  </div>
+
+  <div class="card">
+    <h2>meldingen aanzetten</h2>
+    <p class="muted">zet deze site op je beginscherm en tik daarna op meldingen aanzetten</p>
+    <button id="enable">meldingen aanzetten</button>
+    <button id="test">test op dit toestel</button>
+    <p id="status" class="small"></p>
+  </div>
+
+  <div class="card">
+    <h2>eenmalig koppelen</h2>
+    <p class="muted">maak je eigen koppelcode en stuur die naar de ander</p>
+    <button id="make">mijn koppelcode maken</button>
+    <div id="mine" class="code small" style="display:none"></div>
+    <p><textarea id="peer" rows="4" placeholder="plak hier de code van de ander"></textarea></p>
+    <button id="save">code opslaan</button>
+    <p id="peerStatus" class="small"></p>
+  </div>
+
+  <div class="card">
+    <h2>test naar de ander</h2>
+    <button id="send">stuur test push</button>
+    <p id="sendStatus" class="small"></p>
+  </div>
+
+  <script>
+    const PUBLIC_KEY='BEEJ8Df02qGOiULnqzik3ai-Q3DJv9CNyvnF6xTOAzDNaAR6PcDiV8qAbrHmqtsbi1dOaScybb3YHliub5NZzcw';
+    const $=id=>document.getElementById(id);
+    let reg;
+
+    function toUint8Array(value){
+      const padding='='.repeat((4-value.length%4)%4);
+      const base64=(value+padding).replace(/-/g,'+').replace(/_/g,'/');
+      const raw=atob(base64);
+      return Uint8Array.from([...raw].map(c=>c.charCodeAt(0)));
+    }
+
+    async function init(){
+      if('serviceWorker' in navigator){
+        reg=await navigator.serviceWorker.register('/sw.js');
+        await navigator.serviceWorker.ready;
+      }
+      $('role').value=localStorage.role||'';
+      $('role').onchange=()=>localStorage.role=$('role').value;
+      updateStatus();
+    }
+
+    function updateStatus(){
+      const p=Notification.permission;
+      $('status').textContent=p==='granted'?'meldingen staan aan ✅':p==='denied'?'meldingen zijn geblokkeerd':'meldingen staan nog niet aan';
+      $('status').className='small '+(p==='granted'?'ok':'warn');
+    }
+
+    async function getSubscription(){
+      if(!reg) throw new Error('service worker is nog niet klaar');
+      let sub=await reg.pushManager.getSubscription();
+      if(!sub){
+        sub=await reg.pushManager.subscribe({
+          userVisibleOnly:true,
+          applicationServerKey:toUint8Array(PUBLIC_KEY)
+        });
+      }
+      return sub;
+    }
+
+    $('enable').onclick=async()=>{
+      try{
+        const p=await Notification.requestPermission();
+        if(p==='granted') await getSubscription();
+        updateStatus();
+      }catch(e){$('status').textContent=e.message}
+    };
+
+    $('test').onclick=()=>{
+      if(Notification.permission!=='granted') return alert('zet eerst meldingen aan');
+      reg.showNotification('Dean Weekplanner',{body:'testmelding werkt ✅',icon:'/icon.svg',data:{url:'/'}})
+    };
+
+    $('make').onclick=async()=>{
+      try{
+        const sub=await getSubscription();
+        const code=btoa(unescape(encodeURIComponent(JSON.stringify(sub.toJSON()))));
+        $('mine').style.display='block';
+        $('mine').textContent=code;
+        navigator.clipboard?.writeText(code);
+      }catch(e){
+        $('mine').style.display='block';
+        $('mine').textContent=e.message;
+      }
+    };
+
+    $('save').onclick=()=>{
+      try{
+        const obj=JSON.parse(decodeURIComponent(escape(atob($('peer').value.trim()))));
+        if(!obj.endpoint||!obj.keys) throw new Error();
+        localStorage.peerSubscription=JSON.stringify(obj);
+        $('peerStatus').textContent='gekoppeld ✅';
+        $('peerStatus').className='small ok';
+      }catch{
+        $('peerStatus').textContent='de code klopt niet';
+        $('peerStatus').className='small warn';
+      }
+    };
+
+    $('send').onclick=async()=>{
+      try{
+        const raw=localStorage.peerSubscription;
+        if(!raw) throw new Error('koppel eerst de ander');
+        const role=localStorage.role||'iemand';
+        const r=await fetch('/api/push',{
+          method:'POST',
+          headers:{'content-type':'application/json'},
+          body:JSON.stringify({
+            subscription:JSON.parse(raw),
+            title:'Dean Weekplanner',
+            body:'testmelding van '+role+' ✅',
+            url:'/'
+          })
+        });
+        const data=await r.json();
+        if(!r.ok) throw new Error(data.error||'versturen mislukt');
+        $('sendStatus').textContent='verstuurd ✅';
+        $('sendStatus').className='small ok';
+      }catch(e){
+        $('sendStatus').textContent=e.message;
+        $('sendStatus').className='small warn';
+      }
+    };
+
+    init();
+  </script>
+</div>
+</body>
+</html>
